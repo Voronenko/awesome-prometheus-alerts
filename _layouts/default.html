@@ -13,6 +13,7 @@
   <link rel="icon" type="image/png" href="/assets/favicon.ico">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
   <script src="{{ '/assets/js/app.js?v=' | append: site.github.build_revision | relative_url }}"></script>
 
@@ -91,7 +92,7 @@
       </a>
     </h1>
     <h2 class="project-tagline">{{ site.description | default: site.github.project_tagline }}</h2>
-    <a href="/alertmanager" class="btn">AlertManager config</a>
+    <a href="/alertmanager" class="btn">Global configuration</a>
     <a href="/rules" class="btn">Rules</a>
     <a href="https://github.com/samber/awesome-prometheus-alerts/blob/master/CONTRIBUTING.md" class="btn">Contribute on
       GitHub
@@ -128,11 +129,27 @@
 
     <footer class="site-footer">
       {% if site.github.is_project_page %}
-      <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.title }}</a> is maintained by
-        <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+        <span class="site-footer-owner">
+          <a href="{{ site.github.repository_url }}">{{ site.title }}</a> is maintained by
+          <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.
+        </span>
       {% endif %}
     </footer>
   </main>
+
+
+  <!-- Screeb tag -->
+  <script type="text/javascript">
+    (function (s,c,r,ee,b) {
+        s['ScreebObject']=r;s[r]=s[r]||function(){(s[r].q=s[r].q||[]).push(arguments)};
+        b=c.createElement('script');b.type='text/javascript';
+        b.id=r;b.src=ee;b.async=1;c.getElementsByTagName("head")[0].appendChild(b);
+    }(window,document,'$screeb','https://t.screeb.app/tag.js'));
+
+    $screeb('init', '232450e3-d3fe-4240-b543-649a5041a7db');
+  </script>
+  <!-- End of Screeb tag -->
+
 </body>
 
 </html>

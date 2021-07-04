@@ -21,6 +21,8 @@ Collection available here: **[https://awesome-prometheus-alerts.grep.to](https:/
 - [Docker Containers](https://awesome-prometheus-alerts.grep.to/rules#docker-containers)
 - [Blackbox](https://awesome-prometheus-alerts.grep.to/rules#blackbox)
 - [Windows](https://awesome-prometheus-alerts.grep.to/rules#windows-server)
+- [VMWare](https://awesome-prometheus-alerts.grep.to/rules#vmware)
+- [Netdata](https://awesome-prometheus-alerts.grep.to/rules#netdata)
 
 #### Databases and brokers
 
@@ -62,12 +64,16 @@ Collection available here: **[https://awesome-prometheus-alerts.grep.to](https:/
 - [ZFS](https://awesome-prometheus-alerts.grep.to/rules#zfs)
 - [OpenEBS](https://awesome-prometheus-alerts.grep.to/rules#openebs)
 - [Minio](https://awesome-prometheus-alerts.grep.to/rules#minio)
+- [SSL/TLS](https://awesome-prometheus-alerts.grep.to/rules#ssl/tls)
 - [Juniper](https://awesome-prometheus-alerts.grep.to/rules#juniper)
 - [CoreDNS](https://awesome-prometheus-alerts.grep.to/rules#coredns)
+- [FreeSwitch](https://awesome-prometheus-alerts.grep.to/rules#freeswitch)
 
 #### Other
 
 - [Thanos](https://awesome-prometheus-alerts.grep.to/rules#thanos)
+- [Loki](https://awesome-prometheus-alerts.grep.to/rules#loki)
+- [Cortex](https://awesome-prometheus-alerts.grep.to/rules#cortex)
 
 ## 🤝 Contributing
 

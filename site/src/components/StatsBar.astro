@@ -1,0 +1,115 @@
+---
+import { getTotalRuleCount, getTotalExporterCount, data } from '../data/rules';
+import { GITHUB_URL } from '../data/site';
+import { getGithubStars } from '../data/github';
+
+const totalRules = getTotalRuleCount();
+const totalExporters = getTotalExporterCount();
+const totalGroups = data.groups.length;
+
+const STAR_MILESTONE = 10000;
+const MILESTONE_LABEL = '10k';
+
+const stars = await getGithubStars();
+
+const starsLabel = stars > 0 ? (stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars)) : '—';
+const progressPct = stars > 0 ? Math.min(100, (stars / STAR_MILESTONE) * 100).toFixed(1) : '0';
+const starsFormatted = stars > 0 ? stars.toLocaleString('en') : '';
+const milestoneFormatted = STAR_MILESTONE.toLocaleString('en');
+---
+
+<div class="flex flex-wrap justify-center gap-6 sm:gap-10 py-4 text-center">
+  <div>
+    <div class="text-2xl font-bold text-brand dark:text-brand-dark">{totalRules}</div>
+    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">alert rules</div>
+  </div>
+  <div>
+    <div class="text-2xl font-bold text-brand dark:text-brand-dark">{totalExporters}</div>
+    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">exporters</div>
+  </div>
+  <div>
+    <div class="text-2xl font-bold text-brand dark:text-brand-dark">{totalGroups}</div>
+    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">categories</div>
+  </div>
+  <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" class="group">
+    <div class="text-2xl font-bold text-brand dark:text-brand-dark flex items-center justify-center gap-1">
+      <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+      <span id="statsbar-stars">{starsLabel}</span>
+    </div>
+    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 group-hover:text-brand dark:group-hover:text-brand-dark transition-colors">engineers starred</div>
+  </a>
+</div>
+
+<!-- Milestone progress bar -->
+<div id="star-milestone-row" class={`mt-2 px-4 ${stars === 0 ? 'opacity-0' : ''}`}>
+  <div class="max-w-xs mx-auto">
+    <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
+      <span>
+        <span id="statsbar-stars-count">{starsFormatted}</span><span id="statsbar-milestone-suffix">{stars > 0 ? ` / ${milestoneFormatted} — help us reach ${MILESTONE_LABEL}!` : ''}</span>
+      </span>
+      <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" class="text-yellow-500 hover:text-yellow-600 dark:text-yellow-400 dark:hover:text-yellow-300 font-medium transition-colors flex items-center gap-0.5 ml-2 flex-shrink-0">
+        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Star it
+      </a>
+    </div>
+    <div class="bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+      <div
+        id="statsbar-star-bar"
+        class="bg-yellow-400 dark:bg-yellow-500 h-1.5 rounded-full transition-all duration-700"
+        style={`width: ${progressPct}%`}
+      ></div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ STAR_MILESTONE, MILESTONE_LABEL }}>
+  const starsEl = document.getElementById('statsbar-stars');
+  const starsCountEl = document.getElementById('statsbar-stars-count');
+  const milestoneSuffixEl = document.getElementById('statsbar-milestone-suffix');
+  const barEl = document.getElementById('statsbar-star-bar');
+  const milestoneRow = document.getElementById('star-milestone-row');
+
+  if (starsEl) {
+    const CACHE_KEY = 'gh_stars_apa';
+    const CACHE_TTL = 3600 * 1000;
+
+    function fmt(n) {
+      return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+    }
+
+    function updateMilestone(n) {
+      if (starsCountEl) starsCountEl.textContent = n.toLocaleString('en');
+      if (milestoneSuffixEl) milestoneSuffixEl.textContent = ` / ${STAR_MILESTONE.toLocaleString('en')} — help us reach ${MILESTONE_LABEL}!`;
+      if (barEl) barEl.style.width = `${Math.min(100, (n / STAR_MILESTONE) * 100).toFixed(1)}%`;
+      if (milestoneRow) milestoneRow.classList.remove('opacity-0');
+    }
+
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    let isFresh = false;
+    if (cached) {
+      const { value, ts } = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) {
+        starsEl.textContent = fmt(value);
+        updateMilestone(value);
+        isFresh = true;
+      }
+    }
+
+    if (!isFresh) fetch('https://api.github.com/repos/samber/awesome-prometheus-alerts', {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.stargazers_count) {
+          starsEl.textContent = fmt(data.stargazers_count);
+          updateMilestone(data.stargazers_count);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ value: data.stargazers_count, ts: Date.now() }));
+        }
+      })
+      .catch(() => {});
+  }
+</script>

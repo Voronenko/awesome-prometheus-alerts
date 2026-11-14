@@ -1,0 +1,52 @@
+name: Promtool check
+
+on:
+  pull_request:
+    paths:
+      - _data/**
+      - test/**
+      - .github/workflows/test.yml
+  push:
+    branches:
+      - master
+    paths:
+      - _data/**
+      - test/**
+      - .github/workflows/test.yml
+
+jobs:
+  promtool-check:
+    name: Check alert rules syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4
+
+      - name: Install liquid
+        run: gem install liquid-cli
+
+      - name: Build rule configuration
+        run: bash test/generate.sh
+
+      - name: Check Prometheus alert rules
+        uses: peimanja/promtool-github-actions@master
+        with:
+          promtool_actions_subcommand: 'rules'
+          promtool_actions_files: 'test/rules/*/*.yml'
+          promtool_actions_comment: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test alert rule behavior
+        run: |
+          docker run --rm --entrypoint /bin/promtool \
+            -v "$PWD:/work" -w /work prom/prometheus:v3.15.0 \
+            test rules test/*.test.yml

@@ -1,0 +1,67 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish
+    if: github.repository_owner == 'samber'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4
+
+      - name: Install liquid
+        run: |
+          gem install liquid -v 5.5.1
+          gem install liquid-cli
+
+      - name: Build rule configuration
+        run: |
+          cat _data/rules.yml | yq -I 0 -o json > _data/rules.json
+
+          rm -rf dist/rules
+
+          for service in $(cat _data/rules.json | jq -r '.groups[].services[] | @base64'); do
+            subdir=dist/rules/$(echo ${service} | base64 --decode | jq -r '.name | ascii_downcase | split(" ") | join("-")')
+            mkdir -p "${subdir}"
+
+            # groupName=$(echo "{% assign groupName = name | split: ' ' %}{% capture groupNameCamelcase %}{% for word in groupName %}{{ word | capitalize }} {% endfor %}{% endcapture %} {{ groupNameCamelcase | remove: ' ' | remove: '-' }}" | liquid $(echo ${service} | base64 --decode | jq -r '.name | ascii_downcase | split(" ") | join("-")'))
+
+            for exporter in $(echo ${service} | base64 --decode | jq -r '.exporters[] | @base64'); do
+              exporterName=$(echo ${exporter} | base64 --decode | jq -r '.slug')
+              cat dist/template.yml | liquid "$(echo ${exporter} | base64 --decode)" > ${subdir}/${exporterName}.yml
+              echo ${subdir}/${exporterName}.yml
+            done
+          done
+
+          rm _data/rules.json
+
+      # https://peterevans.dev/posts/github-actions-how-to-automate-code-formatting-in-pull-requests/
+      - name: Check for modified files
+        id: git-check
+        run: echo "modified=$(git status -s --porcelain | wc -l | awk '{$1=$1};1')" >> $GITHUB_OUTPUT
+      - name: Push changes
+        if: steps.git-check.outputs.modified != '0'
+        run: |
+          git config --global user.name 'samber'
+          git config --global user.email 'samber@users.noreply.github.com'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add .
+          git commit -m "Publish"
+          git push

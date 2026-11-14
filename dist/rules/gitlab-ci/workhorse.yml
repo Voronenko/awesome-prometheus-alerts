@@ -1,0 +1,37 @@
+groups:
+
+- name: Workhorse
+
+  
+  rules:
+
+    # Workhorse sits in front of Puma and handles Git HTTP, file uploads, and proxying.
+    # Threshold from GitLab Omnibus default rules: 10% for high-traffic instances.
+    - alert: GitlabWorkhorseHighErrorRate
+      expr: 'sum(rate(gitlab_workhorse_http_request_duration_seconds_count{code=~"5.."}[5m])) / sum(rate(gitlab_workhorse_http_request_duration_seconds_count[5m])) * 100 > 10 and sum(rate(gitlab_workhorse_http_request_duration_seconds_count[5m])) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Workhorse high error rate (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} is returning more than 10% HTTP 5xx errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 10s threshold is a rough default; depends on your request mix (large file uploads/downloads vs typical Git operations) — adjust based on your baseline.
+    - alert: GitlabWorkhorseHighLatency
+      expr: 'histogram_quantile(0.95, sum(rate(gitlab_workhorse_http_request_duration_seconds_bucket[5m])) by (le)) > 10'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Workhorse high latency (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} p95 request latency is above 10 seconds.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 100 may need adjustment based on instance size.
+    - alert: GitlabWorkhorseHighIn-flightRequests
+      expr: 'gitlab_workhorse_http_in_flight_requests > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Workhorse high in-flight requests (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} has {{ $value }} in-flight requests.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

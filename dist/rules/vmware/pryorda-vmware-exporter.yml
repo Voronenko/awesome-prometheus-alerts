@@ -1,0 +1,44 @@
+groups:
+
+- name: PryordaVmwareExporter
+
+  
+  rules:
+
+    - alert: VirtualMachineMemoryCritical
+      expr: 'vmware_vm_mem_usage_average / 100 >= 95'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: Virtual Machine Memory Critical (instance {{ $labels.instance }})
+        description: "High memory usage on {{ $labels.instance }}: {{ $value | printf \"%.2f\"}}%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: VirtualMachineMemoryWarning
+      expr: 'vmware_vm_mem_usage_average / 100 >= 90 and vmware_vm_mem_usage_average / 100 < 95'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Virtual Machine Memory Warning (instance {{ $labels.instance }})
+        description: "High memory usage on {{ $labels.instance }}: {{ $value | printf \"%.2f\"}}%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 3 snapshots is a rough default; how many snapshots are reasonable depends on your backup/retention policy — adjust based on your workflow.
+    - alert: HighNumberOfSnapshots
+      expr: 'vmware_vm_snapshots > 3'
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: High Number of Snapshots (instance {{ $labels.instance }})
+        description: "High snapshots number on {{ $labels.instance }}: {{ $value }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 7 days is a rough default; how long a snapshot should live depends on your backup/retention policy — adjust based on your workflow.
+    - alert: OutdatedSnapshots
+      expr: '(time() - vmware_vm_snapshot_timestamp_seconds) / (60 * 60 * 24) >= 7'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Outdated Snapshots (instance {{ $labels.instance }})
+        description: "Outdated snapshots on {{ $labels.instance }}: {{ $value | printf \"%.0f\"}} days\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

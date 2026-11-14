@@ -1,0 +1,60 @@
+// Every call site appends a path with no leading slash (e.g. `${SITE_URL}rules/`), so
+// SITE_URL must always end in exactly one slash — BASE_URL doesn't carry a trailing one
+// when `base` is configured without it (see astro.config.mjs).
+export const SITE_URL = `${(import.meta.env.SITE as string).replace(/\/$/, '')}${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+export const SITE_ORIGIN = import.meta.env.SITE as string;
+
+export const SITE_NAME = 'Awesome Prometheus Alerts';
+
+/** ISO date the project was first published — used as datePublished across all schemas */
+export const SITE_DATE_PUBLISHED = '2018-10-21';
+
+// Author
+export const AUTHOR_NAME = 'Samuel Berthe';
+export const AUTHOR_GITHUB_URL = 'https://github.com/samber';
+export const TWITTER_HANDLE = '@samuelberthe';
+
+// GitHub
+export const GITHUB_URL = 'https://github.com/samber/awesome-prometheus-alerts';
+export const GITHUB_API_REPO_URL = 'https://api.github.com/repos/samber/awesome-prometheus-alerts';
+export const GITHUB_CONTRIBUTING_URL = `${GITHUB_URL}/blob/master/CONTRIBUTING.md`;
+export const GITHUB_LICENSE_URL = `${GITHUB_URL}/blob/master/LICENSE`;
+
+// Sibling awesome lists maintained alongside this one, cross-linked from the footer.
+export const SIBLING_AWESOME_LISTS = [
+  { name: 'Awesome AI-Native', url: 'https://samber.github.io/awesome-ai-native/' },
+  { name: 'Awesome OLAP', url: 'https://samber.github.io/awesome-olap/' },
+  { name: 'Awesome User Research', url: 'https://samber.github.io/awesome-user-research/' },
+];
+
+// Licenses
+export const LICENSE_CC_BY_URL = 'https://creativecommons.org/licenses/by/4.0/';
+export const LICENSE_CC_BY_NAME = 'Creative Commons CC BY 4.0';
+export const LICENSE_MIT_URL = 'https://opensource.org/licenses/MIT';
+export const LICENSE_MIT_NAME = 'MIT';
+export const GITHUB_MIT_LICENSE_URL = `${GITHUB_URL}/blob/master/site/LICENSE`;
+
+export const schemaAuthor = {
+  '@type': 'Person',
+  name: AUTHOR_NAME,
+  url: AUTHOR_GITHUB_URL,
+  sameAs: [
+    AUTHOR_GITHUB_URL,
+    `https://twitter.com/${TWITTER_HANDLE.slice(1)}`,
+  ],
+};
+
+export const schemaPublisher = {
+  '@type': 'Organization',
+  name: 'Prometheus Alerts authors',
+  url: GITHUB_URL,
+  sameAs: [GITHUB_URL],
+};
+
+export const schemaWebSite = {
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  url: SITE_URL,
+};
+
+export const SCHEMA_IN_LANGUAGE = 'en' as const;

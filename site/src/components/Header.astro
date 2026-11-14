@@ -1,0 +1,228 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import SearchOverlay from './SearchOverlay.astro';
+import { sponsors } from '../data/sponsors';
+import { SITE_NAME, GITHUB_URL, GITHUB_CONTRIBUTING_URL } from '../data/site';
+import { getGithubStars } from '../data/github';
+
+interface Props {
+  base: string;
+}
+
+const { base } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+function isActive(path: string) {
+  return currentPath.startsWith(`${base}${path}`);
+}
+
+const stars = await getGithubStars();
+
+const starsLabel = stars > 0 ? (stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars)) : '—';
+---
+
+<!-- Main header -->
+<header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-14">
+
+      <!-- Logo -->
+      <a href={`${base}/`} class="flex items-center gap-2 font-semibold text-slate-900 dark:text-white hover:text-brand dark:hover:text-brand-dark transition-colors flex-shrink-0">
+        <img src={`${base}/favicon.svg`} alt="Prometheus flame" class="w-6 h-6" aria-hidden="true" />
+        <span class="hidden sm:block text-sm">{SITE_NAME}</span>
+        <span class="sm:hidden text-sm">APA</span>
+      </a>
+
+      <!-- Desktop nav -->
+      <nav class="hidden md:flex items-center gap-6" aria-label="Main navigation">
+        <a
+          href={`${base}/rules/`}
+          class={`text-sm font-medium transition-colors ${isActive('/rules') ? 'text-brand dark:text-brand-dark' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
+        >
+          Rules
+        </a>
+
+        <!-- Guides dropdown -->
+        <div class="relative group">
+          <button class={`text-sm font-medium transition-colors flex items-center gap-1 ${isActive('/alertmanager') || isActive('/blackbox') || isActive('/sleep') ? 'text-brand dark:text-brand-dark' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
+            Guides
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute top-full right-0 mt-1 w-52 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 py-1">
+            <a href={`${base}/alertmanager/`} class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand dark:hover:text-brand-dark">
+              AlertManager Config
+            </a>
+            <a href={`${base}/blackbox-exporter/`} class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand dark:hover:text-brand-dark">
+              Blackbox Exporter
+            </a>
+            <a href={`${base}/sleep-peacefully/`} class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand dark:hover:text-brand-dark">
+              Sleep Peacefully
+            </a>
+          </div>
+        </div>
+
+        <a
+          href={GITHUB_CONTRIBUTING_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+        >
+          Contribute
+        </a>
+
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Star on GitHub"
+          class="flex items-center gap-0 rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden text-xs font-medium hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+        >
+          <span class="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <svg class="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            Star
+          </span>
+          <span id="github-stars" class="px-2.5 py-1 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-l border-slate-200 dark:border-slate-700 tabular-nums">
+            {starsLabel}
+          </span>
+        </a>
+
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Search"
+          onclick="window.openSearch?.()"
+          class="hidden md:flex items-center gap-1.5 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          <span class="hidden lg:inline text-xs text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5">⌘K</span>
+        </button>
+
+        <ThemeToggle />
+
+        <!-- Mobile hamburger -->
+        <button
+          id="mobile-menu-btn"
+          class="md:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+        >
+          <svg id="hamburger-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="close-icon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sponsors row -->
+  <div class="border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-900/50 py-2 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex items-center justify-center gap-3">
+      <span class="text-xs font-medium tracking-wider uppercase text-slate-400 dark:text-slate-500">Sponsored by</span>
+      {sponsors.map((s) => (
+        <a href={s.url} target="_blank" rel="noopener noreferrer" class="hover:opacity-75 transition-opacity" title={s.name} data-sponsor-name={s.name} data-sponsor-slot="header">
+          <img src={`${base}${s.logo}`} alt={`${s.name} — ${s.description}`} class="h-10 w-auto" />
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div
+    id="mobile-menu"
+    class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+  >
+    <nav class="px-4 py-3 space-y-1" aria-label="Mobile navigation">
+      <button
+        type="button"
+        id="mobile-search-btn"
+        class="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+        </svg>
+        Search
+      </button>
+      <a href={`${base}/rules/`} class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Rules</a>
+      <a href={`${base}/alertmanager/`} class="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">AlertManager Config</a>
+      <a href={`${base}/blackbox-exporter/`} class="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Blackbox Exporter</a>
+      <a href={`${base}/sleep-peacefully/`} class="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Sleep Peacefully</a>
+      <a href={GITHUB_CONTRIBUTING_URL} target="_blank" rel="noopener noreferrer" class="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Contribute</a>
+      <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" class="block px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<SearchOverlay />
+
+<script>
+  import { initSponsorClickTracking } from '../scripts/sponsor';
+  initSponsorClickTracking();
+</script>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  const hamburger = document.getElementById('hamburger-icon');
+  const closeIcon = document.getElementById('close-icon');
+
+  btn?.addEventListener('click', () => {
+    const isOpen = menu?.classList.toggle('hidden') === false;
+    btn.setAttribute('aria-expanded', String(isOpen));
+    hamburger?.classList.toggle('hidden', isOpen);
+    closeIcon?.classList.toggle('hidden', !isOpen);
+  });
+
+  const mobileSearchBtn = document.getElementById('mobile-search-btn');
+  mobileSearchBtn?.addEventListener('click', () => {
+    menu?.classList.add('hidden');
+    btn?.setAttribute('aria-expanded', 'false');
+    hamburger?.classList.remove('hidden');
+    closeIcon?.classList.add('hidden');
+    (window as Window & { openSearch?: () => void }).openSearch?.();
+  });
+
+  // Live star count — fetch from GitHub API on page load, cache in sessionStorage
+  const starsEl = document.getElementById('github-stars');
+  if (starsEl) {
+    const CACHE_KEY = 'gh_stars_apa';
+    const CACHE_TTL = 3600 * 1000; // 1 hour
+
+    function formatStars(n: number): string {
+      return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+    }
+
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    let isFresh = false;
+    if (cached) {
+      const { value, ts } = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) {
+        starsEl.textContent = formatStars(value);
+        isFresh = true;
+      }
+    }
+
+    if (!isFresh) fetch('https://api.github.com/repos/samber/awesome-prometheus-alerts', {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.stargazers_count) {
+          starsEl.textContent = formatStars(data.stargazers_count);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ value: data.stargazers_count, ts: Date.now() }));
+        }
+      })
+      .catch(() => {});
+  }
+</script>

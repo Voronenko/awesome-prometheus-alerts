@@ -1,0 +1,43 @@
+groups:
+
+- name: EmbeddedExporter
+
+  
+  rules:
+
+    # The job summary gauges only grow: a failed allocation stays counted until the job is garbage collected, so the rule alerts on new ones.
+    - alert: NomadJobFailed
+      expr: 'delta(nomad_nomad_job_summary_failed[10m]) > 0'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Nomad job failed (instance {{ $labels.instance }})
+        description: "Nomad job {{ $labels.job }} had {{ $value | printf \"%.0f\" }} new failed allocation(s) in the last 10 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: NomadJobLost
+      expr: 'delta(nomad_nomad_job_summary_lost[10m]) > 0'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Nomad job lost (instance {{ $labels.instance }})
+        description: "Nomad job {{ $labels.job }} had {{ $value | printf \"%.0f\" }} new lost allocation(s) in the last 10 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: NomadJobQueued
+      expr: 'nomad_nomad_job_summary_queued > 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Nomad job queued (instance {{ $labels.instance }})
+        description: "Nomad job {{ $labels.job }} has {{ $value }} queued allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: NomadBlockedEvaluation
+      expr: 'nomad_nomad_blocked_evals_total_blocked > 0'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Nomad blocked evaluation (instance {{ $labels.instance }})
+        description: "Nomad has {{ $value }} blocked evaluations. The cluster may lack resources to place allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

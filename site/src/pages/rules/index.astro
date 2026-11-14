@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ServiceCard from '../../components/ServiceCard.astro';
+import CautionBanner from '../../components/CautionBanner.astro';
+import { data, getGroupSlug, getRuleCount, getTotalRuleCount, getTotalServiceCount, buildRedirectMap } from '../../data/rules';
+import { SITE_URL, schemaWebSite } from '../../data/site';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const totalRules = getTotalRuleCount();
+const totalServices = getTotalServiceCount();
+const redirectMap = buildRedirectMap(base);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${totalRules} Prometheus Alerting Rules for ${totalServices} Services`,
+  description: `Browse ${totalRules} Prometheus alerting rules across ${totalServices} services. Organized by category: databases, Kubernetes, cloud providers, message brokers, and more.`,
+  url: `${SITE_URL}rules/`,
+  isPartOf: schemaWebSite,
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: data.groups.length,
+    itemListElement: data.groups.map((group, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: group.name,
+      url: `${SITE_URL}rules/${getGroupSlug(group)}/`,
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title={`${totalRules} Prometheus Alerting Rules for ${totalServices} Services | Awesome Prometheus Alerts`}
+  description={`Browse ${totalRules} Prometheus alerting rules across ${totalServices} services. Organized by category: databases, Kubernetes, cloud providers, message brokers, and more.`}
+  jsonLd={jsonLd}
+>
+  <!-- Old-anchor redirect handler -->
+  <script define:vars={{ redirectMap }}>
+    if (window.location.hash) {
+      const anchor = window.location.hash.slice(1);
+      // Try exact match, then strip trailing numeric suffix (e.g. -1, -2) added by the old site
+      const target = redirectMap[anchor] ?? redirectMap[anchor.replace(/-\d+$/, '')];
+      if (target) {
+        window.location.replace(target);
+      }
+    }
+  </script>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Breadcrumbs items={[{ label: 'Rules' }]} base={base} />
+
+    <!-- Header -->
+    <div class="mt-6 mb-8">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Prometheus Alert Rules</h1>
+      <p class="text-slate-500 dark:text-slate-400">
+        {totalRules} alerting rules across {totalServices} services and {data.groups.length} categories.
+      </p>
+    </div>
+
+    <CautionBanner />
+
+    <!-- Groups -->
+    <div class="space-y-10">
+      {data.groups.map((group) => {
+        const groupSlug = getGroupSlug(group);
+        const groupRuleCount = group.services.reduce((sum, svc) => sum + getRuleCount(svc), 0);
+        return (
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                <a href={`${base}/rules/${groupSlug}/`} class="hover:text-brand dark:hover:text-brand-dark transition-colors">
+                  {group.name}
+                </a>
+              </h2>
+              <span class="text-sm text-slate-400 dark:text-slate-500">
+                {group.services.length} services · {groupRuleCount} rules
+              </span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {group.services.map((service) => (
+                <ServiceCard service={service} group={group} base={base} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  </div>
+</BaseLayout>

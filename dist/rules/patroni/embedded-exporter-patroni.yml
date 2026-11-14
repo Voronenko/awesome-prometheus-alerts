@@ -1,0 +1,16 @@
+groups:
+
+- name: EmbeddedExporterPatroni
+
+  
+  rules:
+
+    # 1m delay allows a restart without triggering an alert.
+    - alert: PatroniHasNoLeader
+      expr: '(max by (scope) (patroni_primary) < 1) and (max by (scope) (patroni_standby_leader) < 1)'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Patroni has no Leader (instance {{ $labels.instance }})
+        description: "A leader node (neither primary nor standby) cannot be found inside the cluster {{ $labels.scope }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,25 @@
+groups:
+
+- name: OzarklakeMssqlExporter
+
+  
+  rules:
+
+    # 1m delay allows a restart without triggering an alert.
+    - alert: SqlServerDown
+      expr: 'mssql_up == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: SQL Server down (instance {{ $labels.instance }})
+        description: "SQL server instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SqlServerDeadlock
+      expr: 'mssql_deadlocks > 5'
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: SQL Server deadlock (instance {{ $labels.instance }})
+        description: "SQL Server {{ $labels.instance }} is experiencing deadlocks ({{ $value }}/s)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

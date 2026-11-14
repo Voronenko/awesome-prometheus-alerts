@@ -1,0 +1,126 @@
+groups:
+
+- name: EmbeddedExporter
+
+  
+  rules:
+
+    - alert: SpinnakerThreadPoolExhaustion
+      expr: 'threadpool_blockingQueueSize > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker thread pool exhaustion (instance {{ $labels.instance }})
+        description: "Orca message handler thread pool has {{ $value }} blocked threads on {{ $labels.instance }}. Pipeline execution throughput is degraded.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 0.05/s is a rough default; absolute dead-letter volume scales with your overall task throughput — adjust based on your workload.
+    - alert: SpinnakerDeadMessages
+      expr: 'rate(queue_dead_messages_total[5m]) > 0.05'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Spinnaker dead messages (instance {{ $labels.instance }})
+        description: "Orca is producing dead-lettered messages ({{ $value | humanize }}/s). These are tasks that exhausted all retries and will not be executed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # When this threshold is exceeded, Igor stops triggering pipelines for the affected monitor.
+    # See https://kb.armory.io/s/article/Hitting-Igor-s-caching-thresholds
+    - alert: SpinnakerPollingMonitorItemsOverThreshold
+      expr: 'sum by (monitor, partition) (pollingMonitor_itemsOverThreshold) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Spinnaker polling monitor items over threshold (instance {{ $labels.instance }})
+        description: "Igor polling monitor {{ $labels.monitor }} for {{ $labels.partition }} has exceeded its item threshold, preventing pipeline triggers.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SpinnakerCircuitBreakerOpen
+      expr: 'resilience4j_circuitbreaker_state{state="open"} == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker circuit breaker open (instance {{ $labels.instance }})
+        description: "Circuit breaker {{ $labels.name }} is open on {{ $labels.instance }}, indicating repeated downstream failures.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # In a healthy Spinnaker, queue_ready_depth should stay at or near 0.
+    # Sustained non-zero values indicate Orca cannot keep up with incoming work.
+    - alert: SpinnakerOrcaQueueBackingUp
+      expr: 'queue_ready_depth > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker Orca queue backing up (instance {{ $labels.instance }})
+        description: "Orca work queue has {{ $value }} messages ready for delivery but not yet picked up. Pipeline executions may be delayed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # The 30s threshold is a rough default. Adjust based on your pipeline SLOs.
+    - alert: SpinnakerOrcaQueueMessageLagHigh
+      expr: 'rate(queue_message_lag_seconds_sum[5m]) / rate(queue_message_lag_seconds_count[5m]) > 30 and rate(queue_message_lag_seconds_count[5m]) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker Orca queue message lag high (instance {{ $labels.instance }})
+        description: "Orca queue message lag is {{ $value }}s. Pipeline stages are waiting too long before being processed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Zombies are pipeline executions that are running but have lost their queue entry.
+    # See https://spinnaker.io/docs/guides/runbooks/orca-zombie-executions/
+    - alert: SpinnakerZombieExecutions
+      expr: 'rate(queue_zombies_total[5m]) > 0.05'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker zombie executions (instance {{ $labels.instance }})
+        description: "Zombie pipeline executions rate is {{ $value | humanize }}/s. These are executions with no corresponding queue messages.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SpinnakerPollingMonitorFailures
+      expr: 'rate(pollingMonitor_failed_total[5m]) > 0.05'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker polling monitor failures (instance {{ $labels.instance }})
+        description: "Igor polling monitor is experiencing failures ({{ $value }} per second). CI/SCM integrations may not trigger pipelines.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # The 5% threshold is a rough default. Adjust based on your traffic patterns.
+    - alert: SpinnakerHighApiErrorRate
+      expr: 'sum by (instance) (rate(controller_invocations_total{status="5xx"}[5m])) / sum by (instance) (rate(controller_invocations_total[5m])) > 0.05 and sum by (instance) (rate(controller_invocations_total[5m])) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker high API error rate (instance {{ $labels.instance }})
+        description: "Spinnaker API 5xx error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 0.05/s is a rough default; throttling volume correlates with your configured rate limit and client request volume — adjust based on your workload.
+    - alert: SpinnakerApiRateLimitThrottling
+      expr: 'rate(rateLimitThrottling_total[5m]) > 0.05'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker API rate limit throttling (instance {{ $labels.instance }})
+        description: "Gate is actively throttling API requests on {{ $labels.instance }} ({{ $value }} throttled requests per second).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SpinnakerClouddriverHighErrorRate
+      expr: 'sum by (instance) (rate(controller_invocations_total{status="5xx", job=~".*clouddriver.*"}[5m])) / sum by (instance) (rate(controller_invocations_total{job=~".*clouddriver.*"}[5m])) > 0.05 and sum by (instance) (rate(controller_invocations_total{job=~".*clouddriver.*"}[5m])) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker Clouddriver high error rate (instance {{ $labels.instance }})
+        description: "Clouddriver 5xx error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}. Cloud operations may be failing.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This metric is specific to AWS cloud providers in Clouddriver.
+    # The 1000ms threshold is a rough default. Adjust based on your AWS usage patterns.
+    - alert: SpinnakerAwsRateLimiting
+      expr: 'amazonClientProvider_rateLimitDelayMil > 1000'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spinnaker AWS rate limiting (instance {{ $labels.instance }})
+        description: "Clouddriver is being rate-limited by AWS on {{ $labels.instance }} ({{ $value }}ms delay). Cloud operations will be slower.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

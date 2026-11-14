@@ -1,0 +1,34 @@
+groups:
+
+- name: EbpfExporter
+
+  
+  rules:
+
+    - alert: EbpfExporterNoEnabledConfigs
+      expr: 'ebpf_exporter_enabled_configs == 0 or absent(ebpf_exporter_enabled_configs)'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: eBPF exporter no enabled configs (instance {{ $labels.instance }})
+        description: "eBPF exporter has no enabled configurations. No eBPF programs are being run. (instance {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # The exporter uses loose attachment: if a program fails to load (missing BTF, kernel incompatibility), it sets this metric to 0 and continues running.
+    - alert: EbpfExporterProgramNotAttached
+      expr: 'ebpf_exporter_ebpf_program_attached == 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: eBPF exporter program not attached (instance {{ $labels.instance }})
+        description: "eBPF program {{ $labels.id }} failed to attach. The program is not collecting data. (instance {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: EbpfExporterDecoderErrors
+      expr: 'rate(ebpf_exporter_decoder_errors_total[5m]) > 0.05'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: eBPF exporter decoder errors (instance {{ $labels.instance }})
+        description: "eBPF exporter is experiencing decoder errors for config {{ $labels.config }}. Kernel data is not being correctly transformed into labels. (instance {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

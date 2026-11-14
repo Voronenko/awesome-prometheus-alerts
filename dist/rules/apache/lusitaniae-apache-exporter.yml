@@ -1,0 +1,43 @@
+groups:
+
+- name: LusitaniaeApacheExporter
+
+  
+  rules:
+
+    - alert: ApacheDown
+      expr: 'apache_up == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Apache down (instance {{ $labels.instance }})
+        description: "Apache down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ApacheWorkersLoad
+      expr: '(sum by (instance) (apache_workers{state="busy"}) / sum by (instance) (apache_scoreboard) ) * 100 > 80 and sum by (instance) (apache_scoreboard) > 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Apache workers load (instance {{ $labels.instance }})
+        description: "Apache workers in busy state approach the max workers count 80% workers busy on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # 5000ms threshold is a rough default; acceptable response time varies by route and your SLO — adjust based on your baseline.
+    - alert: ApacheResponseTimeTooHigh
+      expr: 'increase(apache_duration_ms_total[5m]) / increase(apache_accesses_total[5m]) > 5000 and increase(apache_accesses_total[5m]) > 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Apache response time too high (instance {{ $labels.instance }})
+        description: "Apache average response time on {{ $labels.instance }} is {{ $value }}ms over the last 5 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ApacheRestart
+      expr: 'apache_uptime_seconds_total / 60 < 1'
+      for: 0m
+      labels:
+        severity: info
+      annotations:
+        summary: Apache restart (instance {{ $labels.instance }})
+        description: "Apache has just been restarted.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

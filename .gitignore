@@ -1,4 +1,13 @@
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
+# Generated data
+_data/rules.json
+test/rules/
+
+# Node / Astro
+/node_modules
+site/node_modules/
+site/dist/
+site/.astro/
+site/public/pagefind/
+
+# Misc
+.worktrees/

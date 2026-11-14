@@ -1,0 +1,34 @@
+---
+import { MONOCHROME_LOGO_SLUGS } from '../data/monochromeLogos';
+
+// Renders a service's brand logo. The build enforces that every service has a
+// `logo` field and that the referenced asset exists under site/public/.
+// (The `logo` prop is still treated defensively to avoid runtime crashes.)
+interface Props {
+  logo?: string;
+  name: string;
+  base: string;
+  class?: string;
+  // Marks this instance as the page's own logo for Pagefind, so the search
+  // results overlay shows it as the result thumbnail. Only pass this on the
+  // single hero logo of a service/exporter page — never on list/nav usages
+  // (ServiceCard, Sidebar, ExporterSection), which render many logos per page
+  // and would make Pagefind pick an arbitrary one as the page thumbnail.
+  pagefindMeta?: boolean;
+}
+
+const { logo, name, base, class: className = 'h-5 w-5', pagefindMeta = false } = Astro.props;
+
+const logoSlug = logo?.match(/([^/]+)\.[a-z]+$/)?.[1];
+const isMonochrome = logoSlug ? MONOCHROME_LOGO_SLUGS.has(logoSlug) : false;
+---
+
+{logo && (
+  <img
+    src={`${base}${logo}`}
+    alt={`${name} logo`}
+    loading="lazy"
+    class={`object-contain shrink-0 ${isMonochrome ? 'dark:invert' : ''} ${className}`}
+    data-pagefind-meta={pagefindMeta ? 'image[src], image_alt[alt]' : undefined}
+  />
+)}
